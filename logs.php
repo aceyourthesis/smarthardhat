@@ -1,7 +1,5 @@
-<?php include 'head.php'; ?>
-<?php include 'navBar.php'; ?>
-
-
+<?php require 'head.php'; ?>
+<?php require 'navBar.php'; ?>
 
 <section>
     <div class="container">
@@ -31,7 +29,10 @@
                         </div>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-bordered table-hover text-center">
+                        <div id="loaderDiv" class="d-flex justify-content-center my-3" aria-live="polite" aria-busy="true">
+                            <i class="fas fa-spinner fa-spin fa-3x text-success" aria-hidden="true"></i>
+                        </div>
+                        <table class="table table-bordered table-hover text-center d-none" id="logsTable">
                             <thead class="table-light">
                                 <tr>
                                     <th>Timestamp</th>
@@ -41,9 +42,7 @@
                                     <th>Longitude</th>
                                 </tr>
                             </thead>
-                            <tbody id="logsTableBody">
-                                <!-- Dashboard data rows will be rendered here -->
-                            </tbody>
+                            <tbody id="logsTableBody"></tbody>
                         </table>
                     </div>
                 </div>
@@ -52,106 +51,129 @@
     </div>
 
     <script type="module">
-        // Import the necessary Firebase SDKs
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-analytics.js";
-        import { getDatabase, ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+    import { FirebaseService } from './firebase-service.js';
+    import { firebaseConfig } from './firebase-config.js';
 
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyAy_bQFynVXe_RflYLYgsU0skc8ThOKDYE",
-            authDomain: "smarthardhat-22267.firebaseapp.com",
-            databaseURL: "https://smarthardhat-22267-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "smarthardhat-22267",
-            storageBucket: "smarthardhat-22267.appspot.com",
-            messagingSenderId: "1001952473982",
-            appId: "1:1001952473982:web:a309b046972d3602d5b92f",
-            measurementId: "G-X155LG29H6"
-        };
+    const firebaseService = new FirebaseService(firebaseConfig);
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
-        const db = getDatabase();
+    document.addEventListener("DOMContentLoaded", () => {
+    const hardHatSelect = document.getElementById("hardHatSelect");
+    const sortSelect = document.getElementById("sortSelect");
+    const loaderDiv = document.getElementById("loaderDiv");
+    const logsTable = document.getElementById("logsTable");
 
-        const logsContent = document.getElementById("logsTableBody");
+    // Check if elements exist
+    if (!hardHatSelect || !sortSelect || !loaderDiv || !logsTable) {
+        console.error("One or more required elements are missing in the DOM.");
+        return;
+    }
 
-        const logsRef = ref(db, "logs");
-
-        // Function to format Firebase timestamps
-        function formatTimestamp(timestamp) {
-            if (timestamp) {
-                const date = new Date(timestamp);
-                return date.toLocaleString(); // Formats to local time (adjust as needed)
-            }
-            return "Loading..."; // Return a placeholder if timestamp is not available
+    function formatTimestamp(timestamp) {
+        if (!timestamp || isNaN(new Date(timestamp))) {
+            return "Invalid Date";
         }
+        return new Date(timestamp).toLocaleString();
+    }
 
-        // Function to update the logs table content
-        function updateLogsContent(data) {
-            logsContent.innerHTML = ""; // Clear existing rows
+    function renderLogs(data) {
+        logsTableBody.innerHTML = ""; // Clear previous rows
 
-            // Populate table rows with data
-            data.forEach((log) => {
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td>${formatTimestamp(log.timestamp)}</td>
-                    <td>Hard Hat ${log.hardHatId}</td>
-                    <td>${log.status ? "Active" : "Inactive"}</td>
-                    <td>${log.latitude}</td>
-                    <td>${log.longitude}</td>
-                `;
-                logsContent.appendChild(row); // Append the row to the table
-            });
-        }
-
-        // Listen for changes in the "logs" node
-        onValue(logsRef, (snapshot) => {
-            const data = []; // Array to store retrieved data
-
-            // Extract each child node value and include the timestamp as the parent key
-            snapshot.forEach((childSnapshot) => {
-                const log = childSnapshot.val();
-                data.push(log);
-            });
-
-            console.log("Retrieved Data:", data); // Log the final data array for debugging
-
-            const hardHatSelect = document.getElementById("hardHatSelect");
-            const sortSelect = document.getElementById("sortSelect");
-
-            // Function to filter and sort the data based on dropdown values
-            function filterAndSortData() {
-                let filteredData = data;
-
-                // Filter by Hard Hat ID
-                const selectedHardHatId = hardHatSelect.value;
-                if (selectedHardHatId !== "0") {
-                    filteredData = filteredData.filter(log => log.hardHatId === parseInt(selectedHardHatId));
-                }
-
-                // Sort by Time (ascending or descending)
-                const sortOrder = sortSelect.value === "1" ? 1 : -1;
-                filteredData.sort((a, b) => {
-                    const timestampA = a.timestamp;
-                    const timestampB = b.timestamp;
-                    return (timestampA - timestampB) * sortOrder;
-                });
-
-                console.log("Filtered and Sorted Data:", filteredData); // Log the final data for debugging
-
-                // Update the dashboard display with the filtered and sorted data
-                updateLogsContent(filteredData);
+        data.forEach((log) => {
+            // Validate log data
+            if (!log || typeof log !== "object") {
+                console.warn("Invalid log entry:", log);
+                return; // Skip invalid logs
             }
 
-            // Attach event listeners to dropdowns to trigger filter and sort on change
-            hardHatSelect.addEventListener('change', filterAndSortData);
-            sortSelect.addEventListener('change', filterAndSortData);
+            if (
+                log.timestamp === undefined ||
+                log.hardHatId === undefined ||
+                log.status === undefined ||
+                log.latitude === undefined ||
+                log.longitude === undefined
+            ) {
+                console.warn("Log with missing fields:", log);
+                return; // Skip logs with missing fields
+            }
 
-            // Initially render all logs when the page loads
-            filterAndSortData();
+            const timestamp = formatTimestamp(log.timestamp);
+            const hardHatId = `Hard Hat ${log.hardHatId}`;
+            const status = log.status ? "Active" : "Inactive";
+            const latitude = log.latitude;
+            const longitude = log.longitude;
+
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${timestamp}</td>
+                <td>${hardHatId}</td>
+                <td>${status}</td>
+                <td>${latitude}</td>
+                <td>${longitude}</td>
+            `;
+            logsTableBody.appendChild(row);
         });
-    </script>
+    }
+
+    function filterAndSortLogs(data) {
+        let filteredData = data;
+
+        // Filter out invalid logs
+        filteredData = filteredData.filter((log) => {
+            return (
+                log &&
+                typeof log === "object" &&
+                log.timestamp !== undefined &&
+                log.hardHatId !== undefined &&
+                log.status !== undefined &&
+                log.latitude !== undefined &&
+                log.longitude !== undefined
+            );
+        });
+
+        // Filter by Hard Hat ID
+        const selectedHardHatId = hardHatSelect.value;
+        if (selectedHardHatId !== "0") {
+            filteredData = filteredData.filter(
+                (log) => log.hardHatId === parseInt(selectedHardHatId)
+            );
+        }
+
+        // Sort by time
+        const sortOrder = sortSelect.value === "1" ? 1 : -1;
+        filteredData.sort((a, b) => (a.timestamp - b.timestamp) * sortOrder);
+
+        return filteredData;
+    }
+
+    async function fetchAndRenderLogs() {
+        try {
+            const data = await firebaseService.fetchLogs();
+
+            // Log the number of logs retrieved
+            console.log(`Number of logs retrieved: ${data.length}`);
+
+            renderLogs(filterAndSortLogs(data));
+
+            hardHatSelect.addEventListener("change", () => {
+                renderLogs(filterAndSortLogs(data));
+            });
+            sortSelect.addEventListener("change", () => {
+                renderLogs(filterAndSortLogs(data));
+            });
+        } catch (error) {
+            console.error("Error fetching logs:", error);
+            logsTableBody.innerHTML = `<tr><td colspan="5" class="text-danger">Failed to load logs. Please try again later.</td></tr>`;
+        } finally {
+            loaderDiv.classList.add("d-none");
+            logsTable.classList.remove("d-none");
+        }
+    }
+
+    fetchAndRenderLogs();
+});
+    
+    
+</script>
 </section>
 
-<?php include 'footer.php'; ?>
+<?php require 'footer.php'; ?>

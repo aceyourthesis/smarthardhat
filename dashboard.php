@@ -29,7 +29,9 @@
             </div>
 
             <div class="col-5">
-                <div id="map" style="height: 90vh; width: 100%;"></div>
+                <div class="p-1">
+                    <div id="map" style="height: 90vh; width: 100%;"> </div>
+                </div>
             </div>
         </div>
     </div>
