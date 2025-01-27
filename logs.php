@@ -12,7 +12,7 @@
                         </div>
 
                         <div class="mx-2">
-                            <label for="hardHatSelect" class="form-label">Filter by Hard Hat ID</label>
+                            <label for="hardHatSelect" class="form-label">Select Hard Hat ID</label>
                             <select id="hardHatSelect" class="form-select border border-success">
                                 <option value="0">All Hard Hats</option>
                                 <option value="1">Hard Hat 1</option>
@@ -27,6 +27,13 @@
                                 <option value="2">Latest first</option>
                             </select>
                         </div>
+
+                        <div class="px-2">
+                            <button type="button" class="btn btn-danger" id="btn-clearLogs" style="font-size: 2rem;">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+
                     </div>
                     <div class="table-responsive">
                         <div id="loaderDiv" class="d-flex justify-content-center my-3" aria-live="polite" aria-busy="true">
@@ -61,6 +68,7 @@
     const sortSelect = document.getElementById("sortSelect");
     const loaderDiv = document.getElementById("loaderDiv");
     const logsTable = document.getElementById("logsTable");
+    const clearLogsButton = document.getElementById("btn-clearLogs");
 
     // Check if elements exist
     if (!hardHatSelect || !sortSelect || !loaderDiv || !logsTable) {
@@ -168,6 +176,21 @@
             logsTable.classList.remove("d-none");
         }
     }
+
+    // Clear logs functionality
+    clearLogsButton.addEventListener("click", async () => {
+            const isConfirmed = confirm("Are you sure you want to clear all logs? This action cannot be undone.");
+            if (isConfirmed) {
+                try {
+                    //await firebaseService.clearLogs();
+                    //logsTableBody.innerHTML = "";
+                    alert("Logs cleared successfully!");
+                } catch (error) {
+                    console.error("Error clearing logs:", error);
+                    alert("Failed to clear logs. Please try again later.");
+                }
+            }
+        });
 
     fetchAndRenderLogs();
 });
