@@ -7,8 +7,8 @@
         <span class="navbar-toggler-icon" ></span>
       </button>
       <div class="d-flex justify-content-center flex-grow-1">
-        <a class="navbar-brand text-white mx-3" href="#" style = "font-size: 2rem">
-          <i class="fas fa-hard-hat me-2 " ></i> Smart Hard Hat Monitoring System
+        <a class="navbar-brand text-white mx-3" href="#" style = "font-size: 1.5rem">
+          <i class="fas fa-hard-hat me-2 "></i> Smart Hard Hat
         </a>
       </div>
     </div>

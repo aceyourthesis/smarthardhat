@@ -1,0 +1,45 @@
+/* Base font size for the root element */
+html {
+    font-size: 16px; /* Default base size */
+}
+
+/* Responsive font sizes */
+h2 {
+    font-size: 2rem; /* 32px on desktop */
+}
+
+table th,
+table td {
+    font-size: 1rem; /* 16px on desktop */
+}
+
+/* Adjust font sizes for smaller screens */
+@media (max-width: 768px) {
+    html {
+        font-size: 14px; /* Reduce base size for mobile */
+    }
+
+    h2 {
+        font-size: 1.75rem; /* 28px on mobile */
+    }
+
+    table th,
+    table td {
+        font-size: 0.9rem; /* 14.4px on mobile */
+    }
+}
+
+@media (max-width: 576px) {
+    html {
+        font-size: 12px; /* Further reduce base size for very small screens */
+    }
+
+    h2 {
+        font-size: 1.5rem; /* 24px on very small screens */
+    }
+
+    table th,
+    table td {
+        font-size: 0.8rem; /* 12.8px on very small screens */
+    }
+}
